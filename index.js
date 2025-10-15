@@ -64,7 +64,7 @@ app.post('/generate-from-image', upload.single('image'), async (req, res) => {
   }
 });
 
-// 4. Generate From Document
+// 3. Generate From Document
 app.post('/generate-from-document', upload.single('document'), async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -84,7 +84,7 @@ app.post('/generate-from-document', upload.single('document'), async (req, res) 
   }
 });
 
-// 3. Generate From Audio
+// 4. Generate From Audio
 app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
   try {
     const { prompt } = req.body;
