@@ -14,7 +14,22 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server ready on http://localhost:${PORT}`));
+
+// Auto-create upload directories
+async function ensureUploadDirs() {
+  try {
+    await fs.mkdir('./uploads/images', { recursive: true });
+    await fs.mkdir('./uploads/audio', { recursive: true });
+    await fs.mkdir('./uploads/documents', { recursive: true });
+    console.log('Upload directories ready');
+  } catch (err) {
+    console.error('Error creating upload directories:', err);
+  }
+}
+
+ensureUploadDirs().then(() => {
+  app.listen(PORT, () => console.log(`Server ready on http://localhost:${PORT}`));
+});
 
 function extractText(resp) {
   try {
@@ -49,7 +64,13 @@ app.post('/generate-from-image', upload.single('image'), async (req, res) => {
   try {
     const { prompt } = req.body;
     const imageBase64 = req.file.buffer.toString('base64');
-    
+
+    // Save uploaded image to uploads/images folder
+    const timestamp = Date.now();
+    const filename = `uploads/images/${timestamp}_${req.file.originalname}`;
+    await fs.writeFile(filename, req.file.buffer);
+    console.log(`Saved image: ${filename}`);
+
     const resp = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [
@@ -57,8 +78,8 @@ app.post('/generate-from-image', upload.single('image'), async (req, res) => {
         { inlineData: { mimeType: req.file.mimetype, data: imageBase64 } }
       ]
     });
-    
-    res.json({ result: extractText(resp) });
+
+    res.json({ result: extractText(resp), savedFile: filename });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -69,7 +90,13 @@ app.post('/generate-from-document', upload.single('document'), async (req, res) 
   try {
     const { prompt } = req.body;
     const docBase64 = req.file.buffer.toString('base64');
-    
+
+    // Save uploaded document to uploads/documents folder
+    const timestamp = Date.now();
+    const filename = `uploads/documents/${timestamp}_${req.file.originalname}`;
+    await fs.writeFile(filename, req.file.buffer);
+    console.log(`Saved document: ${filename}`);
+
     const resp = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [
@@ -77,8 +104,8 @@ app.post('/generate-from-document', upload.single('document'), async (req, res) 
         { inlineData: { mimeType: req.file.mimetype, data: docBase64 } }
       ]
     });
-    
-    res.json({ result: extractText(resp) });
+
+    res.json({ result: extractText(resp), savedFile: filename });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -89,7 +116,13 @@ app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
   try {
     const { prompt } = req.body;
     const audioBase64 = req.file.buffer.toString('base64');
-    
+
+    // Save uploaded audio to uploads/audio folder
+    const timestamp = Date.now();
+    const filename = `uploads/audio/${timestamp}_${req.file.originalname}`;
+    await fs.writeFile(filename, req.file.buffer);
+    console.log(`Saved audio: ${filename}`);
+
     const resp = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [
@@ -97,8 +130,8 @@ app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
         { inlineData: { mimeType: req.file.mimetype, data: audioBase64 } }
       ]
     });
-    
-    res.json({ result: extractText(resp) });
+
+    res.json({ result: extractText(resp), savedFile: filename });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
